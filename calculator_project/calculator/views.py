@@ -9,8 +9,17 @@ def calculator_view(request):
         num1 = request.POST.get("num1")
         num2 = request.POST.get("num2")
         operation = request.POST.get("operation")
+        action = request.POST.get("action")  # Get action from form (either 'calculate' or 'reset')
+
+        # Handle reset action
+        if action == "reset":
+            request.session.pop("history", None)  # Clear history from session
+            history = []  # Clear local history
+            result = None
+            return render(request, "calculator.html", {"result": result, "history": history})
 
         try:
+            # Handle calculation operations
             if operation == "sqrt":  # Square root operation
                 num1 = float(num1)  # Only one number needed
                 if num1 < 0:
@@ -44,7 +53,6 @@ def calculator_view(request):
             history.insert(0, operation_text)  # Insert at the beginning
             history = history[:5]  # Keep only the last 5 calculations
             request.session["history"] = history  # Save to session
-
 
         except ValueError:
             result = "Invalid input"
