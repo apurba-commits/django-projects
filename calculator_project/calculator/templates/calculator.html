@@ -9,7 +9,7 @@
     <h2>Simple Calculator</h2>
     <form method="POST">
         {% csrf_token %}
-        <input type="number" name="num1" placeholder="Enter first number" required>
+        <input type="number" name="num1" placeholder="Enter first number">
 
         <select name="operation" id="operation">
             <option value="add">+</option>
@@ -17,12 +17,14 @@
             <option value="multiply">×</option>
             <option value="divide">÷</option>
             <option value="sqrt">√ (Square Root)</option>
+            <option value="percentage">% (Percentage)</option>
+            <option value="exponent">^ (Exponent)</option>
         </select>
 
         <input type="number" name="num2" id="num2" placeholder="Enter second number">
 
         <button type="submit">Calculate</button>
-         <button type="submit" name="action" value="reset">Reset</button>
+        <button type="submit" name="action" value="reset">Reset</button>
     </form>
 
     {% if result is not None %}

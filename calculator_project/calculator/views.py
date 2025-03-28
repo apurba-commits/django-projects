@@ -1,60 +1,75 @@
-import math
 from django.shortcuts import render
+import math
+
+
+def validate_input(num1, num2, operation):
+    """Validates input values based on the operation type."""
+    if not num1:
+        return "First number is required", None, None
+    try:
+        num1 = float(num1)
+    except ValueError:
+        return "Invalid input for first number", None, None
+
+    if operation == "sqrt":
+        return None, num1, None  # num2 not needed
+
+    if not num2:
+        return "Second number is required for this operation", None, None
+    try:
+        num2 = float(num2)
+    except ValueError:
+        return "Invalid input for second number", None, None
+
+    return None, num1, num2
+
+
+def perform_calculation(num1, num2, operation):
+    """Performs the requested mathematical operation."""
+    operations = {
+        "add": (num1 + num2, f"{num1} + {num2} = {num1 + num2}"),
+        "subtract": (num1 - num2, f"{num1} - {num2} = {num1 - num2}"),
+        "multiply": (num1 * num2, f"{num1} × {num2} = {num1 * num2}"),
+        "percentage": (num1 * (num2 / 100), f"{num2}% of {num1} = {num1 * (num2 / 100)}"),
+        "divide": (None if num2 == 0 else num1 / num2,
+                   f"{num1} ÷ {num2} = {num1 / num2}" if num2 != 0 else "Cannot divide by zero"),
+        "exponent": (num1 ** num2, f"{num1} ^ {num2} = {num1 ** num2}")
+    }
+
+    if operation == "sqrt":
+        if num1 < 0:
+            return "Error: Cannot calculate square root of a negative number", f"√{num1} = Error"
+        return math.sqrt(num1), f"√{num1} = {math.sqrt(num1)}"
+
+    return operations.get(operation, ("Invalid operation", "Invalid operation"))
+
 
 def calculator_view(request):
-    result = None
-    history = request.session.get("history", [])  # Retrieve history from session
+    """Handles calculator operations and session history."""
+    result, operation_text = None, None
+    history = request.session.get("history", [])
 
     if request.method == "POST":
-        num1 = request.POST.get("num1")
-        num2 = request.POST.get("num2")
-        operation = request.POST.get("operation")
-        action = request.POST.get("action")  # Get action from form (either 'calculate' or 'reset')
+        action = request.POST.get("action")
 
-        # Handle reset action
+        # ✅ Handle Reset
         if action == "reset":
-            request.session.pop("history", None)  # Clear history from session
-            history = []  # Clear local history
-            result = None
-            return render(request, "calculator.html", {"result": result, "history": history})
+            request.session.pop("history", None)
+            return render(request, "calculator.html", {"result": None, "history": []})
 
-        try:
-            # Handle calculation operations
-            if operation == "sqrt":  # Square root operation
-                num1 = float(num1)  # Only one number needed
-                if num1 < 0:
-                    result = "Error: Cannot calculate square root of a negative number"
-                    operation_text = f"√{num1} = Error"
-                else:
-                    result = math.sqrt(num1)
-                    operation_text = f"√{num1} = {result}"
-            else:
-                num1 = float(num1)
-                num2 = float(num2)
+        num1, num2, operation = request.POST.get("num1"), request.POST.get("num2"), request.POST.get("operation")
 
-                if operation == "add":
-                    result = num1 + num2
-                    operation_text = f"{num1} + {num2} = {result}"
-                elif operation == "subtract":
-                    result = num1 - num2
-                    operation_text = f"{num1} - {num2} = {result}"
-                elif operation == "multiply":
-                    result = num1 * num2
-                    operation_text = f"{num1} × {num2} = {result}"
-                elif operation == "divide":
-                    if num2 == 0:
-                        result = "Cannot divide by zero"
-                        operation_text = f"{num1} ÷ {num2} = Error (Cannot divide by zero)"
-                    else:
-                        result = num1 / num2
-                        operation_text = f"{num1} ÷ {num2} = {result}"
+        # ✅ Validate Input
+        error, num1, num2 = validate_input(num1, num2, operation)
+        if error:
+            result = error
+        else:
+            result, operation_text = perform_calculation(num1, num2, operation)
 
-            # Store in history (limit to last 5 calculations)
-            history.insert(0, operation_text)  # Insert at the beginning
-            history = history[:5]  # Keep only the last 5 calculations
-            request.session["history"] = history  # Save to session
-
-        except ValueError:
-            result = "Invalid input"
+        # ✅ Store in History
+        if operation_text and result is not None:
+            history.insert(0, operation_text)
+            history = history[:5]
+            request.session["history"] = history
 
     return render(request, "calculator.html", {"result": result, "history": history})
