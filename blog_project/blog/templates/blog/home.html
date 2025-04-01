@@ -1,0 +1,16 @@
+{% extends 'blog/base.html' %}
+
+{% block title %}Blog Home{% endblock %}
+
+{% block content %}
+    <h1>Welcome to the Blog</h1>
+
+    {% for post in posts %}
+        <div>
+            <h2><a href="{% url 'post-detail' pk=post.pk %}">{{ post.title }}</a></h2>
+            <p>By {{ post.author }} | {{ post.created_at }}</p>
+            <p>{{ post.content|slice:":100" }}...</p>
+        </div>
+        <hr>
+    {% endfor %}
+{% endblock %}
